@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="gDBvYfNOUjJiKL47apsbFz">
+<head data-page-node-id="R5HGrtdFEu7Xid2yI366yA">
+<meta charset="UTF-8" data-page-node-id="LvTMNt8IeowsVQluGtxTBG" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="WY7jI89acUccw3C3OsJTq8" />
+<title>探我趣测 · 管理后台</title>
+<style>
+  :root{
+    --pink:#ff9db4; --pink-deep:#ff6f9c; --blue:#7cc6ff;
+    --bg:#f6f7fb; --card:#ffffff; --line:#ececf3; --text:#2b2b3a;
+    --muted:#9aa0b0; --green:#37c98b; --gray:#b9bfd0; --red:#ff5d6c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+  /* ---------- 登录 ---------- */
+  .login-wrap{height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#ffe8f1,#efe6ff,#e3f2ff)}
+  .login-card{width:340px;background:#fff;border-radius:18px;padding:32px 28px;
+    box-shadow:0 18px 50px rgba(120,90,160,.18)}
+  .login-card h1{font-size:19px;text-align:center;margin-bottom:4px}
+  .login-card .sub{text-align:center;color:var(--muted);font-size:12px;margin-bottom:22px}
+  .login-card label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+  .login-card input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
+    font-size:14px;outline:none;transition:.15s}
+  .login-card input:focus{border-color:var(--pink)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+    border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;transition:.15s}
+  .btn-primary{background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;width:100%;margin-top:20px}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+  /* ---------- 主框架 ---------- */
+  .topbar{height:60px;background:#fff;border-bottom:1px solid var(--line);display:flex;
+    align-items:center;padding:0 22px;position:sticky;top:0;z-index:5}
+  .topbar .logo{font-weight:700;font-size:16px}
+  .topbar .logo .dot{color:var(--pink-deep)}
+  .topbar .spacer{flex:1}
+  .topbar .who{color:var(--muted);font-size:13px;margin-right:14px}
+  .topbar .btn-ghost{background:#f1f2f7;color:var(--text);padding:8px 14px}
+  .layout{max-width:1080px;margin:24px auto;padding:0 18px}
+  .toolbar{display:flex;align-items:center;margin-bottom:16px;gap:12px}
+  .toolbar .title{font-size:17px;font-weight:700}
+  .toolbar .spacer{flex:1}
+  .toolbar .btn-new{background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff}
+  .toolbar .count{color:var(--muted);font-size:13px}
+  /* ---------- 表格 ---------- */
+  .table{width:100%;background:var(--card);border-radius:14px;overflow:hidden;
+    box-shadow:0 8px 24px rgba(120,90,160,.06)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:13px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--line)}
+  th{background:#fafbff;color:var(--muted);font-weight:600;font-size:12px}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fcfcff}
+  .emoji{font-size:20px}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .badge.on{background:rgba(55,201,139,.14);color:var(--green)}
+  .badge.off{background:rgba(185,191,208,.22);color:#6b7186}
+  .row-actions{display:flex;gap:8px}
+  .mini{padding:6px 12px;font-size:12px;border-radius:8px;cursor:pointer;border:none;font-weight:600}
+  .mini.edit{background:#eef0ff;color:#5b63d6}
+  .mini.on{background:rgba(55,201,139,.14);color:var(--green)}
+  .mini.off{background:rgba(255,93,108,.12);color:var(--red)}
+  .empty{padding:50px;text-align:center;color:var(--muted)}
+  /* ---------- 弹窗 ---------- */
+  .mask{position:fixed;inset:0;background:rgba(40,30,60,.42);display:none;
+    align-items:center;justify-content:center;z-index:20;padding:18px}
+  .mask.show{display:flex}
+  .modal{width:520px;max-width:100%;max-height:90vh;overflow:auto;background:#fff;border-radius:16px;
+    padding:24px;box-shadow:0 24px 60px rgba(40,30,60,.3)}
+  .modal h2{font-size:17px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+  .field{display:flex;flex-direction:column}
+  .field.full{grid-column:1/3}
+  .field label{font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input,.field textarea{width:100%;padding:10px 11px;border:1px solid var(--line);
+    border-radius:9px;font-size:14px;outline:none;font-family:inherit}
+  .field input:focus,.field textarea:focus{border-color:var(--pink)}
+  .field textarea{resize:vertical;min-height:62px}
+  .field .hint{font-size:11px;color:var(--muted);margin-top:4px}
+  .field code{background:#f3f4f9;padding:1px 5px;border-radius:5px}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+  .btn-cancel{background:#f1f2f7;color:var(--text)}
+  .btn-save{background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff}
+  /* ---------- toast ---------- */
+  .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#2b2b3a;color:#fff;
+    padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.25s;z-index:50;pointer-events:none}
+  .toast.show{opacity:1}
+  .toast.err{background:var(--red)}
+  .toast.ok{background:var(--green)}
+</style>
+</head>
+<body data-page-node-id="P9QijD4E1e6WdiVTeUaAsN">
+
+<!-- 登录 -->
+<div class="login-wrap" id="loginView" data-page-node-id="CHhCFAnAvyAFLVrE7hD1Ko">
+  <div class="login-card" data-page-node-id="leTxXqpzWehKWh4uxEfrBZ">
+    <h1 data-page-node-id="I9KvW5ByNeDUdf0AGqEMiT">探我趣测 <span style="color:var(--pink-deep)" data-page-node-id="39Ummw3vgyJfsQfpWBQAgP">管理后台</span></h1>
+    <div class="sub" data-page-node-id="6UdwCo5cyLQ9vYxamsxNxP">服务器端可视化配置 · 仅管理员可访问</div>
+    <label data-page-node-id="wWVUnDFqtmOQ1MkZCLz9KX">管理员账号</label>
+    <input id="username" placeholder="username" autocomplete="username" data-page-node-id="aSxjHBQ05wTOgmpE1mA47P" />
+    <label data-page-node-id="vgHr1DTUfRKw8buOLYrh6M">密码</label>
+    <input id="password" type="password" placeholder="password" autocomplete="current-password" data-page-node-id="BdkhD3MTfjUBVZ9v8yZ784" />
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()" data-page-node-id="XsKGULBdFXB9K9zTs7Eyb0">登 录</button>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="mainView" style="display:none" data-page-node-id="S9hZ0QF0fDdqb92BWH9Kls">
+  <div class="topbar" data-page-node-id="HvNgzVY07ASAHOZ6prAIzx">
+    <div class="logo" data-page-node-id="pm0ERKGNa3eFgLTShaNmPq">探我趣测<span class="dot" data-page-node-id="6k7gcBDi6f8EdFYbTdHFG0">·</span>管理后台</div>
+    <div class="spacer" data-page-node-id="kWmsuIX9QYoITCLSDJNnBy"></div>
+    <span class="who" id="who" data-page-node-id="fxw1MFX9ZV8CNTGysagXH7"></span>
+    <button class="btn btn-ghost" onclick="doLogout()" data-page-node-id="bHLKknoOOxzPkmFFZ09wj2">退出</button>
+  </div>
+  <div class="layout" data-page-node-id="YYuBVsr0ISrZDCPzsS7oha">
+    <div class="toolbar" data-page-node-id="pQhFbM4BLYv0r3XGB7eroL">
+      <span class="title" data-page-node-id="AtV9Dm6pzZrV6NS2ZBYRwu">测评管理</span>
+      <span class="count" id="count" data-page-node-id="EYRL0jNXDD7aE75CBLPcmf"></span>
+      <div class="spacer" data-page-node-id="yDAsZmSlS64PYmPjMVk5ho"></div>
+      <button class="btn btn-new" onclick="openCreate()" data-page-node-id="SAcP4LdDFTJMAxaTfnvEBf">+ 新建测评</button>
+    </div>
+    <div class="table" data-page-node-id="ZnKBZhKm2451CxSSH19U0N">
+      <table data-page-node-id="FYWF8licvPeZt9FbgFWpQ3">
+        <thead data-page-node-id="HrRjWEvXydohJw9xD3kivu">
+          <tr data-page-node-id="dbbx7hQ3E7EkVW3tenuXMC">
+            <th style="width:54px" data-page-node-id="c0osO3TV8mPQnM0d4iaoYG">序</th>
+            <th style="width:46px" data-page-node-id="aNF0wz1BvKXmgEtVPmLJVd">图标</th>
+            <th data-page-node-id="hWqi7YP5POjPLiltqqI4dv">编码</th>
+            <th data-page-node-id="eJbMxq344BV7jEaeFyU4IE">名称</th>
+            <th data-page-node-id="JdOa4F19G5rvLnrd8qc6a8">分类</th>
+            <th style="width:60px" data-page-node-id="GpJwDKXlA6CQ3FPTlj1jHM">题数</th>
+            <th style="width:60px" data-page-node-id="TmfRbHydshNVuU1zTNgLNo">探币</th>
+            <th style="width:70px" data-page-node-id="ddPAvf5Wk5hxwBwxQ0nc9z">状态</th>
+            <th style="width:170px" data-page-node-id="OA9Xf9dHRwIS2K3LOR72Oh">操作</th>
+          </tr>
+        </thead>
+        <tbody id="rows" data-page-node-id="ChhinwPViCZwUe77TJlghA"></tbody>
+      </table>
+      <div class="empty" id="emptyTip" style="display:none" data-page-node-id="urB5DgK0MujrcnuMtqpo1F">暂无测评，点右上角「新建测评」添加。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="mask" id="mask" data-page-node-id="aGFrCYomebTUsZWQLvcsES">
+  <div class="modal" data-page-node-id="GsFTsLbF17YgizB74v6aW6">
+    <h2 id="modalTitle" data-page-node-id="i4G7HqbUfgEzYjqG69xdtI">新建测评</h2>
+    <div class="grid" data-page-node-id="N8v7PhkPoFNpUsjXQ0JDzF">
+      <div class="field" data-page-node-id="PnianhT8nouiLdmKTluTn2">
+        <label data-page-node-id="5h8emDJGP5FBZcCl63ujMI">编码 code *（唯一，如 mbti）</label>
+        <input id="f_code" placeholder="mbti" data-page-node-id="RUVNaWNtrqTbQBbxOBwasw" />
+        <div class="hint" data-page-node-id="nb5tWmc4zZx7s9R0d9pnFp">创建后不可修改；接口据此查题</div>
+      </div>
+      <div class="field" data-page-node-id="OlVojCmFk0L9iMOThOsInh">
+        <label data-page-node-id="2gvuXJ5jFyHdTz85odmxwx">名称 name *</label>
+        <input id="f_name" placeholder="MBTI 性格" data-page-node-id="ajPSINBpfxSSQwwmciXYiI" />
+      </div>
+      <div class="field" data-page-node-id="DlKVvHXygEDc6kGK7GyIyP">
+        <label data-page-node-id="bwQAwHr7hRfNtm1Tmcnwkc">副标题 subtitle</label>
+        <input id="f_subtitle" placeholder="16 型人格" data-page-node-id="u5vmYZOUrKyBCJhoGIfNSb" />
+      </div>
+      <div class="field" data-page-node-id="TbaLtF2Vp1lXsSD821ybTd">
+        <label data-page-node-id="0FQiCOog225x97Dmzc3T12">图标 emoji</label>
+        <input id="f_emoji" placeholder="🧠" maxlength="8" data-page-node-id="9wtqDWC1avlfdSDNM44BTy" />
+      </div>
+      <div class="field" data-page-node-id="os6llfFFIlv6yc5Z8H2Ex2">
+        <label data-page-node-id="Eb2pIJ2Kxvvwmhz6U0DHwr">分类标签 tag</label>
+        <input id="f_tag" placeholder="性格 / 职业 / 情感" data-page-node-id="7KUpSU42PQeIE4N6UfQ9eZ" />
+      </div>
+      <div class="field" data-page-node-id="FxHEyzgXcbjfAvsNsyS9Af">
+        <label data-page-node-id="wGAYOWbebyFZsOb2xbr1pB">展示顺序 sortOrder（越小越前）</label>
+        <input id="f_sortOrder" type="number" placeholder="1" data-page-node-id="vZw77sVJgLqyZol9HBtaie" />
+      </div>
+      <div class="field" data-page-node-id="CS7AK9UNj8C24SXKs3sR2q">
+        <label data-page-node-id="V7FPHiZiaFd97iRhKif7Dm">抽题数 questionCount（0=全出）</label>
+        <input id="f_questionCount" type="number" placeholder="0" data-page-node-id="BhAQG8DS31IlMlyOsx5PBz" />
+      </div>
+      <div class="field" data-page-node-id="MmOqGHVhG8qBVSfbG2Py80">
+        <label data-page-node-id="QVrbLXfTeWUZtYBeXan0Yk">解锁探币 priceCoin（0=免费）</label>
+        <input id="f_priceCoin" type="number" placeholder="0" data-page-node-id="IDpXvLJBUnQfzo3tdVWdAH" />
+      </div>
+      <div class="field full" data-page-node-id="Ay6Hz2fF3YB6OOZipt7fBv">
+        <label data-page-node-id="pAJw4AIJRjULLy6gyIxdsK">封面图 coverUrl</label>
+        <input id="f_coverUrl" placeholder="https://..." data-page-node-id="1RjPWl5eTbfoQDlqihUCzA" />
+      </div>
+      <div class="field full" data-page-node-id="zEuYzNseHbh0EHGvRGtVMR">
+        <label data-page-node-id="FS6cmAEBR5zG26BlAf229r">描述 description</label>
+        <textarea id="f_description" placeholder="一句话介绍这套测评"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot" data-page-node-id="c8bGNBrq7f5XxI17spnBYc">
+      <button class="btn btn-cancel" onclick="closeModal()" data-page-node-id="41SKWgaoexKDGh3sjWzZNl">取消</button>
+      <button class="btn btn-save" id="saveBtn" onclick="save()" data-page-node-id="CDfhMVfcKCBodxrUUBHChC">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" data-page-node-id="oaUatyPV30C2QfJ0GWV7pC"></div>
+
+<script>
+/* ====== 配置 ====== */
+const API = "";            // 同源：网页由后端托管，直接用相对路径
+const TOKEN_KEY = "twqc_admin_token";
+const USER_KEY  = "twqc_admin_user";
+
+/* ====== 工具 ====== */
+function $(id){ return document.getElementById(id); }
+function getToken(){ return sessionStorage.getItem(TOKEN_KEY); }
+function setToken(t){ sessionStorage.setItem(TOKEN_KEY, t); }
+function clearToken(){ sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(USER_KEY); }
+
+let toastTimer;
+function toast(msg, type){
+  const el = $("toast");
+  el.textContent = msg;
+  el.className = "toast show" + (type ? " " + type : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> el.className = "toast", 2200);
+}
+
+// 灵活抽取后端返回里的数组 / token（兼容 {data:[...]} 或扁平结构）
+function pickArray(body){
+  if (Array.isArray(body)) return body;
+  if (body && Array.isArray(body.data)) return body.data;
+  if (body && Array.isArray(body.list)) return body.list;
+  return [];
+}
+function pickToken(body){
+  if (typeof body === "string") return body;
+  if (body && body.token) return body.token;
+  if (body && body.data && body.data.token) return body.data.token;
+  return null;
+}
+
+async function api(path, opts={}){
+  opts.headers = opts.headers || {};
+  opts.headers["Content-Type"] = "application/json";
+  const t = getToken();
+  if (t) opts.headers["Authorization"] = "Bearer " + t;
+  const res = await fetch(API + path, opts);
+  if (res.status === 401){
+    clearToken();
+    showLogin();
+    throw new Error("登录已失效，请重新登录");
+  }
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch(e){ json = null; }
+  if (!res.ok){
+    const msg = (json && (json.msg || json.message)) || ("请求失败 " + res.status);
+    throw new Error(msg);
+  }
+  return json;
+}
+
+/* ====== 登录 ====== */
+function showLogin(){
+  $("loginView").style.display = "flex";
+  $("mainView").style.display = "none";
+}
+function showMain(){
+  $("loginView").style.display = "none";
+  $("mainView").style.display = "block";
+  $("who").textContent = sessionStorage.getItem(USER_KEY) || "管理员";
+}
+async function doLogin(){
+  const u = $("username").value.trim();
+  const p = $("password").value;
+  if (!u || !p){ toast("请输入账号和密码", "err"); return; }
+  const btn = $("loginBtn"); btn.disabled = true; btn.textContent = "登录中…";
+  try {
+    const body = await api("/api/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const token = pickToken(body);
+    if (!token){ throw new Error("后端未返回 token"); }
+    setToken(token);
+    sessionStorage.setItem(USER_KEY, u);
+    showMain();
+    loadList();
+  } catch(e){
+    toast(e.message || "登录失败", "err");
+  } finally {
+    btn.disabled = false; btn.textContent = "登 录";
+  }
+}
+function doLogout(){ clearToken(); showLogin(); toast("已退出"); }
+
+/* ====== 列表 ====== */
+async function loadList(){
+  try {
+    const body = await api("/api/admin/quiz");   // 管理接口：返回全部（含下线）
+    const list = pickArray(body).sort((a,b)=> (a.sortOrder||0)-(b.sortOrder||0));
+    renderRows(list);
+  } catch(e){ /* 401 已在 api 内处理 */ }
+}
+function renderRows(list){
+  const tb = $("rows");
+  $("emptyTip").style.display = list.length ? "none" : "block";
+  $("count").textContent = "共 " + list.length + " 套";
+  tb.innerHTML = list.map(q => {
+    const on = q.status === 1;
+    return `<tr>
+      <td>${q.sortOrder ?? "-"}</td>
+      <td class="emoji">${q.emoji || "🃏"}</td>
+      <td><code>${q.code}</code></td>
+      <td>${q.name || ""}</td>
+      <td>${q.tag || "-"}</td>
+      <td>${q.questionCount ?? "-"}</td>
+      <td>${q.priceCoin ?? "-"}</td>
+      <td><span class="badge ${on?"on":"off"}">${on?"上线":"下线"}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="mini edit" onclick="openEdit('${q.code}')">编辑</button>
+          ${on
+            ? `<button class="mini off" onclick="toggle('${q.code}',0)">下线</button>`
+            : `<button class="mini on" onclick="toggle('${q.code}',1)">上线</button>`}
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+/* ====== 弹窗 增/改 ====== */
+let editingCode = null;
+function openCreate(){
+  editingCode = null;
+  $("modalTitle").textContent = "新建测评";
+  ["code","name","subtitle","emoji","tag","sortOrder","questionCount","priceCoin","coverUrl","description"]
+    .forEach(k => $("f_"+k).value = "");
+  $("f_code").readOnly = false;
+  $("f_code").style.background = "#fff";
+  $("mask").classList.add("show");
+}
+async function openEdit(code){
+  try {
+    const body = await api("/api/admin/quiz");
+    const q = pickArray(body).find(x => x.code === code);
+    if (!q){ toast("未找到该测评", "err"); return; }
+    editingCode = code;
+    $("modalTitle").textContent = "编辑测评 · " + code;
+    $("f_code").value = q.code || "";
+    $("f_code").readOnly = true;            // 编码不可改
+    $("f_code").style.background = "#f3f4f9";
+    $("f_name").value = q.name || "";
+    $("f_subtitle").value = q.subtitle || "";
+    $("f_emoji").value = q.emoji || "";
+    $("f_tag").value = q.tag || "";
+    $("f_sortOrder").value = q.sortOrder ?? "";
+    $("f_questionCount").value = q.questionCount ?? "";
+    $("f_priceCoin").value = q.priceCoin ?? "";
+    $("f_coverUrl").value = q.coverUrl || "";
+    $("f_description").value = q.description || "";
+    $("mask").classList.add("show");
+  } catch(e){ /* handled */ }
+}
+function closeModal(){ $("mask").classList.remove("show"); }
+
+function collectForm(){
+  const num = (v)=> v === "" || v === null ? null : Number(v);
+  return {
+    code: $("f_code").value.trim(),
+    name: $("f_name").value.trim(),
+    subtitle: $("f_subtitle").value.trim(),
+    emoji: $("f_emoji").value.trim(),
+    tag: $("f_tag").value.trim(),
+    sortOrder: num($("f_sortOrder").value),
+    questionCount: num($("f_questionCount").value),
+    priceCoin: num($("f_priceCoin").value),
+    coverUrl: $("f_coverUrl").value.trim(),
+    description: $("f_description").value.trim()
+  };
+}
+async function save(){
+  const data = collectForm();
+  if (!data.code){ toast("编码不能为空", "err"); return; }
+  if (!data.name){ toast("名称不能为空", "err"); return; }
+  const btn = $("saveBtn"); btn.disabled = true;
+  try {
+    if (editingCode){
+      await api("/api/admin/quiz/" + editingCode, { method:"PUT", body: JSON.stringify(data) });
+      toast("已保存", "ok");
+    } else {
+      await api("/api/admin/quiz", { method:"POST", body: JSON.stringify(data) });
+      toast("已新建", "ok");
+    }
+    closeModal();
+    loadList();
+  } catch(e){
+    toast(e.message || "保存失败", "err");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ====== 上/下线 ====== */
+async function toggle(code, status){
+  const action = status === 1 ? "on" : "off";
+  try {
+    await api(`/api/admin/quiz/${code}/${action}`, { method:"POST" });
+    toast(status === 1 ? "已上线" : "已下线", "ok");
+    loadList();
+  } catch(e){ /* handled */ }
+}
+
+/* ====== 回车登录 ====== */
+$("password") && $("password").addEventListener("keydown", e=>{ if(e.key==="Enter") doLogin(); });
+
+/* ====== 启动 ====== */
+if (getToken()){ showMain(); loadList(); } else { showLogin(); }
+</script>
+</body>
+</html>

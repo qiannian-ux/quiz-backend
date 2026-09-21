@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="9IGHmzxzonaMO8OQMEWnBc">
+<head data-page-node-id="ASZL755JdInDCyAG2O3Vsn">
+<meta charset="UTF-8" data-page-node-id="Pbel26KxBGkXLWF3L1Zuzm" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="w8kulIqBx86kYiVRFBaZOx" />
+<title>探我趣测 · 卡牌风原型</title>
+<style>
+  :root{
+    --pink:#ff9db4; --blue:#a8c8ff; --ink:#3a4150; --ink-soft:#7b8494; --ink-faint:#aab2bf;
+    --card:rgba(255,255,255,0.92); --card-soft:rgba(255,255,255,0.66);
+    --grad:linear-gradient(160deg,#ffe8f1 0%,#efe6ff 45%,#e3f2ff 100%);
+    --btn:linear-gradient(135deg,#ff9db4 0%,#a8c8ff 100%);
+    --radius:28px; --shadow:0 14px 36px rgba(160,170,210,0.20);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;background:#e9ecf5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;color:var(--ink)}
+  .phone{width:390px;height:844px;background:#11131a;border-radius:46px;padding:12px;box-shadow:0 40px 90px rgba(60,70,110,0.35);position:relative}
+  .screen{width:100%;height:100%;background:var(--grad);border-radius:36px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-size:13px;font-weight:600;color:var(--ink);flex:none}
+  .statusbar .icons{display:flex;gap:6px;align-items:center}
+  .scroll{flex:1;overflow-y:auto;padding:8px 22px 20px;-webkit-overflow-scrolling:touch}
+  .scroll::-webkit-scrollbar{width:0}
+  .greet{margin:6px 2px 18px}
+  .greet h1{font-size:26px;font-weight:800;letter-spacing:.5px}
+  .greet p{font-size:14px;color:var(--ink-soft);margin-top:6px}
+  .search{background:var(--card);border-radius:20px;padding:14px 18px;display:flex;align-items:center;gap:10px;color:var(--ink-faint);font-size:14px;box-shadow:var(--shadow);margin-bottom:22px}
+  .sec-title{display:flex;align-items:baseline;justify-content:space-between;margin:4px 4px 14px}
+  .sec-title h2{font-size:18px;font-weight:800}
+  .sec-title .more{font-size:12px;color:var(--ink-faint)}
+
+  /* 今日卡（首页钩子） */
+  .today-card{
+    border-radius:var(--radius);padding:20px;margin-bottom:22px;color:#fff;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#ffb3c8,#c4a8ff);box-shadow:0 16px 38px rgba(196,168,255,0.4);
+  }
+  .today-card .tc-lab{font-size:12px;opacity:.9;letter-spacing:2px}
+  .today-card .tc-title{font-size:20px;font-weight:800;margin:6px 0 14px}
+  .today-card .tc-btn{display:inline-block;background:#fff;color:#b0617a;font-size:14px;font-weight:800;padding:10px 22px;border-radius:22px;cursor:pointer}
+
+  /* 测评网格 */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .qcard{background:var(--card);border-radius:var(--radius);padding:18px 16px 16px;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s ease;position:relative;overflow:hidden}
+  .qcard:active{transform:scale(.97)}
+  .qcard .emoji{width:52px;height:52px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px;box-shadow:0 8px 18px rgba(160,170,210,.22)}
+  .qcard h3{font-size:16px;font-weight:800}
+  .qcard .tag{display:inline-block;margin-top:8px;font-size:11px;color:var(--ink-soft);background:rgba(168,200,255,.18);padding:3px 10px;border-radius:10px}
+  .qcard .meta{font-size:11px;color:var(--ink-faint);margin-top:10px}
+
+  /* 历史 */
+  .hist-item{background:var(--card);border-radius:22px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);margin-bottom:14px}
+  .hist-badge{width:50px;height:50px;border-radius:16px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+  .hist-main{flex:1}.hist-main .h{font-size:15px;font-weight:800}.hist-main .s{font-size:12px;color:var(--ink-soft);margin-top:4px}
+  .hist-again{font-size:12px;font-weight:700;color:var(--ink-soft);border:1.5px solid rgba(160,170,200,.3);padding:8px 14px;border-radius:18px}
+  .empty{text-align:center;color:var(--ink-faint);margin-top:120px;font-size:14px;line-height:2}
+  .empty .big{font-size:46px;display:block;margin-bottom:12px}
+
+  /* 我的 */
+  .profile{background:var(--card);border-radius:var(--radius);padding:22px;text-align:center;box-shadow:var(--shadow);margin-bottom:18px}
+  .avatar{width:76px;height:76px;border-radius:50%;margin:0 auto 12px;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 10px 24px rgba(255,157,180,.34)}
+  .profile .name{font-size:19px;font-weight:800}.profile .sub{font-size:12px;color:var(--ink-soft);margin-top:6px}
+  .stats{display:flex;justify-content:space-around;margin-top:18px;padding-top:16px;border-top:1px solid rgba(160,170,200,.16)}
+  .stats .num{font-size:20px;font-weight:800}.stats .lab{font-size:11px;color:var(--ink-soft);margin-top:2px}
+
+  /* 卡册 */
+  .album-head{display:flex;align-items:baseline;justify-content:space-between;margin:4px 4px 12px}
+  .album-head .p{font-size:13px;color:var(--ink-soft)}
+  .album{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .cell{aspect-ratio:3/4;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  .cell.owned{background:var(--card)}
+  .cell.locked{background:rgba(160,170,200,.16)}
+  .cell .ce{font-size:26px}
+  .cell .cc{font-size:11px;font-weight:800;margin-top:4px;color:var(--ink)}
+  .cell.locked .ce{filter:grayscale(1);opacity:.35}
+  .cell.locked .cc{color:var(--ink-faint)}
+  .cell .rk{position:absolute;top:5px;right:6px;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px}
+  .rk.r{background:#ffd28a;color:#8a5a00}.rk.l{background:#c4a8ff;color:#fff}.rk.n{background:rgba(160,170,200,.3);color:var(--ink-soft)}
+
+  .menu{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-top:6px}
+  .menu .row{display:flex;align-items:center;gap:14px;padding:16px 18px;font-size:15px;font-weight:600;border-bottom:1px solid rgba(160,170,200,.12);cursor:pointer}
+  .menu .row:last-child{border-bottom:none}
+  .menu .ic{font-size:18px;width:22px;text-align:center}
+  .menu .arrow{margin-left:auto;color:var(--ink-faint);font-size:14px}
+  .menu .pill{margin-left:auto;font-size:11px;font-weight:700;color:#b0617a;background:rgba(255,200,220,.5);padding:3px 10px;border-radius:12px}
+
+  /* 底部导航 */
+  .tabbar{flex:none;height:78px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid rgba(160,170,200,.18);display:flex;padding-bottom:14px;border-radius:0 0 36px 36px}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--ink-faint);font-size:11px;font-weight:600;transition:color .15s ease}
+  .tab svg{width:26px;height:26px}
+  .tab.active{color:var(--pink)}.tab.active svg{transform:translateY(-1px)}
+
+  /* 子流程 */
+  .flow{position:absolute;inset:0;background:var(--grad);display:flex;flex-direction:column;z-index:5;transform:translateX(100%);transition:transform .28s cubic-bezier(.22,1,.36,1)}
+  .flow.show{transform:translateX(0)}
+  .flow-top{height:52px;flex:none;display:flex;align-items:center;gap:12px;padding:0 18px;font-size:16px;font-weight:800}
+  .flow-back{width:34px;height:34px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:var(--shadow)}
+  .flow-body{flex:1;overflow-y:auto;padding:10px 22px 30px}
+
+  /* 进度 */
+  .progress-wrap{margin:14px 4px 22px}
+  .progress-top{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:10px}
+  .pbar{height:10px;border-radius:6px;background:rgba(160,170,200,.2);overflow:hidden}
+  .pfill{height:100%;background:var(--btn);border-radius:6px;transition:width .3s ease}
+  .qcard-big{background:var(--card);border-radius:var(--radius);padding:28px 24px;box-shadow:var(--shadow)}
+  .qcard-big .qno{font-size:13px;font-weight:700;color:var(--pink)}
+  .qcard-big .qtext{font-size:20px;font-weight:800;line-height:1.6;margin:14px 0 24px}
+  .opt{background:var(--card-soft);border:2px solid transparent;border-radius:20px;padding:18px 20px;margin-bottom:14px;font-size:16px;font-weight:600;cursor:pointer;transition:all .15s ease}
+  .opt:active{transform:scale(.98)}.opt.sel{border-color:var(--pink);background:rgba(255,157,180,.12)}
+  .next-btn{margin-top:10px;height:56px;border-radius:28px;background:var(--btn);color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(255,157,180,.36);cursor:pointer}
+  .next-btn.off{opacity:.5}
+
+  /* ===== 卡牌抽卡 ===== */
+  .draw-stage{perspective:1200px;margin:18px 0 8px;display:flex;justify-content:center}
+  .flip-card{width:240px;height:340px;cursor:pointer}
+  .flip-inner{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.22,1,.36,1);transform-style:preserve-3d}
+  .flip-card.flipped .flip-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:24px;overflow:hidden;box-shadow:0 20px 46px rgba(160,140,210,.34);display:flex;flex-direction:column}
+  /* 卡背 */
+  .face.back{background:linear-gradient(150deg,#c4a8ff,#ff9db4);align-items:center;justify-content:center;color:#fff;text-align:center;padding:24px}
+  .face.back .seal{width:96px;height:96px;border-radius:50%;border:3px solid rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:44px;margin-bottom:18px}
+  .face.back .bt{font-size:18px;font-weight:800;letter-spacing:2px}
+  .face.back .bs{font-size:12px;opacity:.9;margin-top:10px}
+  .face.back .shine{position:absolute;top:-40%;left:-30%;width:60%;height:180%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:rotate(20deg);animation:shine 3s infinite}
+  @keyframes shine{0%{left:-40%}60%,100%{left:130%}}
+  /* 卡面 */
+  .face.front{transform:rotateY(180deg);background:linear-gradient(170deg,#fff,#f3ecff);padding:18px 16px;align-items:stretch}
+  .face.front .fr-top{display:flex;justify-content:space-between;align-items:center}
+  .face.front .fr-code{font-size:22px;font-weight:800;color:var(--ink)}
+  .face.front .fr-rk{font-size:10px;font-weight:800;padding:3px 9px;border-radius:10px}
+  .face.front .fr-emoji{font-size:78px;text-align:center;margin:8px 0 4px}
+  .face.front .fr-name{text-align:center;font-size:18px;font-weight:800;color:var(--ink)}
+  .face.front .fr-sub{text-align:center;font-size:12px;color:var(--ink-soft);margin-top:4px}
+  .face.front .fr-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+  .face.front .fr-tags span{font-size:11px;background:rgba(168,200,255,.25);color:var(--ink-soft);padding:3px 9px;border-radius:9px}
+  .face.front .fr-deco{position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(135deg,rgba(255,157,180,.18),rgba(168,200,255,.18))}
+
+  .draw-tip{text-align:center;font-size:13px;color:var(--ink-soft);margin:6px 0 4px}
+  .detail{opacity:0;transform:translateY(10px);transition:all .4s ease;margin-top:6px}
+  .detail.show{opacity:1;transform:none}
+  .result-hero{text-align:center;padding:6px 4px}
+  .result-hero .lab{font-size:13px;color:var(--ink-soft);letter-spacing:3px}
+  .result-hero .title{font-size:28px;font-weight:800;margin-top:6px}
+  .result-hero .sub{font-size:13px;color:var(--ink-soft);margin-top:6px}
+  .rcard{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-top:16px}
+  .rcard h4{font-size:15px;font-weight:800;margin-bottom:14px}
+  .rbar{margin-bottom:14px}
+  .rbar .rl{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:6px}
+  .rtrack{height:12px;border-radius:7px;background:rgba(160,170,200,.18);overflow:hidden}
+  .rfill{height:100%;border-radius:7px}
+  .unlock{margin-top:16px;background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);text-align:center}
+  .unlock h4{font-size:16px;font-weight:800}.unlock p{font-size:13px;color:var(--ink-soft);margin:8px 0 16px}
+  .ubtns{display:flex;gap:12px}
+  .ubtns .b{flex:1;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+  .ubtns .ad{background:rgba(168,200,255,.9);color:var(--ink)}.ubtns .pay{background:var(--btn);color:#fff}
+  .result-actions{display:flex;gap:12px;margin-top:16px}
+  .result-actions .b{flex:1;height:54px;border-radius:27px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+  .result-actions .prim{background:var(--btn);color:#fff;box-shadow:0 12px 28px rgba(255,157,180,.34)}
+  .result-actions .ghost{background:var(--card-soft);color:var(--ink-soft)}
+
+  .hint{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(58,65,80,.92);color:#fff;font-size:13px;padding:10px 16px;border-radius:16px;z-index:20;opacity:0;transition:opacity .25s ease;pointer-events:none;white-space:nowrap}
+  .hint.show{opacity:1}
+</style>
+</head>
+<body data-page-node-id="4fdnMIUU32UxVlaMCx4LPc">
+<div class="phone" data-page-node-id="FDykYUDSp3tC1nCFmbsQ7q"><div class="screen" data-page-node-id="eSD4BWFEEf5gcHpR694wfo">
+  <div class="statusbar" data-page-node-id="aFZT4Lqq6FPDRLy0Hgxsoe"><span data-page-node-id="deCeCNBCZCtOLpDEbY6aky">9:41</span><div class="icons" data-page-node-id="Q1ZvSbtpXQOIfQhCvRsrmZ"><span data-page-node-id="6myEZbY6SIQ1OCg9t61PSC">📶</span><span data-page-node-id="Y5vVs5FTUTxGkG9W1bHHjL">🔋</span></div></div>
+
+  <div class="scroll" id="homeScreen" data-page-node-id="J7rG7Tp58dI0O6h3gVCMBz"></div>
+  <div class="scroll" id="historyScreen" style="display:none" data-page-node-id="NfUX5V5FG7bSWtVZTZ4Qlm"></div>
+  <div class="scroll" id="mineScreen" style="display:none" data-page-node-id="VXO7HnUggfAaTQEo175YN6"></div>
+
+  <div class="tabbar" id="tabbar" data-page-node-id="hcoBzqboi053pDduIkOs5U">
+    <div class="tab active" data-tab="home" data-page-node-id="Dqh4otHUsfMsvofzgOWwtM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="LObodYeUVqKTHzcJLxmla4"><path d="M3 10.5 12 3l9 7.5" data-page-node-id="4SBcRUMCWX6U3EaaNTAZYO"/><path d="M5 9.5V21h14V9.5" data-page-node-id="qn3WpKt947ohldqPCPPrd5"/></svg><span data-page-node-id="ANgnmatAffTgz9GiaWdV3z">首页</span>
+    </div>
+    <div class="tab" data-tab="history" data-page-node-id="pIZo2Htl9NpoRTzCGR5lr5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="PvZTrw6v5Ss7sqvMf58C4D"><circle cx="12" cy="12" r="9" data-page-node-id="FJFvHb17JQMyurPxuv865A"/><path d="M12 7v5l3 2" data-page-node-id="3sTWXDRmXagwfkORqcN6ZI"/></svg><span data-page-node-id="D3uXFScv0muTIW2crowk7A">历史</span>
+    </div>
+    <div class="tab" data-tab="mine" data-page-node-id="AS2TV0COkdRkA8VmBseK5x">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="0smMk7BcYWaOeb6suHyJpI"><circle cx="12" cy="8" r="4" data-page-node-id="vTnp1cgMukIEvF7ZnvPX1V"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" data-page-node-id="U8s1qNTgItKhLaPyZtOEaC"/></svg><span data-page-node-id="xqGadnXgtHIvDIIMYB6wvu">我的</span>
+    </div>
+  </div>
+
+  <!-- 答题流程 -->
+  <div class="flow" id="quizFlow" data-page-node-id="NDYy0NZieugtAsYLvfq4tq">
+    <div class="flow-top" data-page-node-id="55cFj4ocevaJroUHsSYmVp"><div class="flow-back" onclick="closeFlow()" data-page-node-id="HHItNUGIj8EANP9kZfzEVd">‹</div><span id="quizTitle" data-page-node-id="SUafuXuy1Y1NOZ8R8bmINI">MBTI 性格测评</span></div>
+    <div class="flow-body" id="quizBody" data-page-node-id="yz8aEKaHGaD8YzwOryVHDd"></div>
+  </div>
+
+  <!-- 抽卡流程 -->
+  <div class="flow" id="drawFlow" data-page-node-id="Ntfw4EsZFCLkXGLPOew0sB">
+    <div class="flow-top" data-page-node-id="E51Bnt8WtdFNvbXyZo1Upy"><div class="flow-back" onclick="closeFlow()" data-page-node-id="4XWWDD394yfzU7cPN6PIJw">‹</div><span id="drawTitle" data-page-node-id="PvsUlGyBpwJ4cYr5PmJGcp">揭晓你的角色卡</span></div>
+    <div class="flow-body" id="drawBody" data-page-node-id="Pb2Q7mw4i2naczGnNNytG0"></div>
+  </div>
+
+  <div class="hint" id="hint" data-page-node-id="ZpkFSZ9NNuIIRDrwz1xulq"></div>
+</div></div>
+
+<script>
+  const quizzes=[
+    {code:'mbti',name:'MBTI 性格',emoji:'🧠',color:'#ff9db4',tag:'性格',count:24,done:'12.8w'},
+    {code:'enneag',name:'九型人格',emoji:'🌟',color:'#a8c8ff',tag:'性格',count:36,done:'6.2w'},
+    {code:'big5',name:'大五人格',emoji:'📊',color:'#ffd28a',tag:'性格',count:30,done:'4.1w'},
+    {code:'holland',name:'霍兰德职业',emoji:'🔧',color:'#9ad7c4',tag:'职业',count:28,done:'3.3w'},
+    {code:'love',name:'恋爱依恋',emoji:'💞',color:'#ffb3c8',tag:'情感',count:20,done:'8.9w'},
+    {code:'eq',name:'情商 EQ',emoji:'🌈',color:'#c4a8ff',tag:'能力',count:22,done:'5.0w'},
+  ];
+  const history=[
+    {name:'MBTI 性格',type:'ESTJ',color:'#ff9db4',time:'2 天前'},
+    {name:'恋爱依恋',type:'安全型',color:'#ffb3c8',time:'上周'},
+    {name:'九型人格',type:'第四型',color:'#a8c8ff',time:'3 周前'},
+  ];
+  // 卡册：16 型，部分已收集
+  const album=[
+    {code:'INTJ',e:'🦊',rk:'l'},{code:'ENFP',e:'🐯',rk:'r'},{code:'INFJ',e:'🦉',rk:'n'},{code:'ESTP',e:'🐱',rk:'n'},
+    {code:'ISFJ',e:'🐻',rk:'n'},{code:'ENTJ',e:'🦁',rk:'r'},{code:'INFP',e:'🐰',rk:'n'},{code:'ESTJ',e:'🐶',rk:'n'},
+    {code:'ENFJ',e:'?',rk:'x'},{code:'ISTP',e:'?',rk:'x'},{code:'ISFP',e:'?',rk:'x'},{code:'ESFP',e:'?',rk:'x'},
+    {code:'INTJ2',e:'?',rk:'x'},{code:'ENTP',e:'?',rk:'x'},{code:'ISTJ',e:'?',rk:'x'},{code:'ESFJ',e:'?',rk:'x'},
+  ];
+  const rkMap={r:['稀有','r'],l:['限定','l'],n:['普通','n'],x:['','n']};
+
+  const $=id=>document.getElementById(id);
+  function hint(m){const h=$('hint');h.textContent=m;h.classList.add('show');setTimeout(()=>h.classList.remove('show'),1400)}
+
+  function renderHome(){
+    const cards=quizzes.map(q=>`
+      <div class="qcard" onclick="startQuiz('${q.code}')">
+        <div class="emoji" style="background:${q.color}33">${q.emoji}</div>
+        <h3>${q.name}</h3><span class="tag">${q.tag} · ${q.count}题</span>
+        <div class="meta">${q.done} 人测过</div>
+      </div>`).join('');
+    $('homeScreen').innerHTML=`
+      <div class="greet"><h1>你好呀 👋</h1><p>今天想多了解自己一点吗？</p></div>
+      <div class="today-card">
+        <div class="tc-lab">今日卡 · 每日一抽</div>
+        <div class="tc-title">🎴 翻开今天的专属卡</div>
+        <div class="tc-btn" onclick="drawCard('today')">抽今日卡</div>
+      </div>
+      <div class="sec-title"><h2>热门测评</h2><span class="more">查看全部 ›</span></div>
+      <div class="grid">${cards}</div>
+      <div style="height:10px"></div>`;
+  }
+  function renderHistory(){
+    if(!history.length){$('historyScreen').innerHTML=`<div class="empty"><span class="big">📭</span>还没有测过哦<br>去首页挑一个试试吧</div>`;return}
+    const items=history.map(h=>`
+      <div class="hist-item">
+        <div class="hist-badge" style="background:${h.color}">${h.type.slice(0,2)}</div>
+        <div class="hist-main"><div class="h">${h.name} · ${h.type}</div><div class="s">${h.time}</div></div>
+        <div class="hist-again" onclick="hint('查看「${h.name}」报告')">再看</div>
+      </div>`).join('');
+    $('historyScreen').innerHTML=`<div class="greet"><h1>我的记录</h1><p>每一次探索，都值得被记住</p></div>${items}<div style="height:10px"></div>`;
+  }
+  function renderMine(){
+    const owned=album.filter(a=>a.e!=='?').length;
+    const cells=album.map(a=>{
+      const [txt,cls]=rkMap[a.rk];
+      const isOwned=a.e!=='?';
+      return `<div class="cell ${isOwned?'owned':'locked'}">
+        ${a.rk!=='x'?`<span class="rk ${cls}">${txt}</span>`:''}
+        <div class="ce">${isOwned?a.e:'🔒'}</div>
+        <div class="cc">${isOwned?a.code:'未集齐'}</div>
+      </div>`;
+    }).join('');
+    $('mineScreen').innerHTML=`
+      <div class="greet"><h1>我的</h1></div>
+      <div class="profile">
+        <div class="avatar">🐱</div>
+        <div class="name">探我小用户</div>
+        <div class="sub">点击编辑个人资料</div>
+        <div class="stats">
+          <div><div class="num">${owned}</div><div class="lab">卡牌</div></div>
+          <div><div class="num">12</div><div class="lab">测过</div></div>
+          <div><div class="num">5</div><div class="lab">连续天数</div></div>
+        </div>
+      </div>
+      <div class="album-head"><h2 style="font-size:18px;font-weight:800">我的卡册</h2><span class="p">已收集 ${owned} / ${album.length}</span></div>
+      <div class="album">${cells}</div>
+      <div class="menu">
+        <div class="row"><span class="ic">📋</span>我的报告<span class="arrow">›</span></div>
+        <div class="row"><span class="ic">✨</span>已解锁内容<span class="pill">会员</span></div>
+        <div class="row"><span class="ic">🔔</span>消息通知<span class="arrow">›</span></div>
+        <div class="row"><span class="ic">⚙️</span>设置<span class="arrow">›</span></div>
+      </div>
+      <div style="height:10px"></div>`;
+  }
+
+  // Tab
+  const screens={home:'homeScreen',history:'historyScreen',mine:'mineScreen'};
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    const tab=t.dataset.tab;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');
+    Object.values(screens).forEach(id=>$(id).style.display='none');
+    $(screens[tab]).style.display='block';$(screens[tab]).scrollTop=0;
+  }));
+
+  // 抽卡
+  function drawCard(mode){
+    $('drawTitle').textContent = mode==='today' ? '今日专属卡' : '揭晓你的角色卡';
+    $('drawBody').innerHTML=`
+      <div class="draw-stage">
+        <div class="flip-card" id="fcard" onclick="flip()">
+          <div class="flip-inner">
+            <div class="face back">
+              <div class="shine"></div>
+              <div class="seal">🎴</div>
+              <div class="bt">探我趣测</div>
+              <div class="bs">轻触卡面 · 揭晓你的角色</div>
+            </div>
+            <div class="face front">
+              <div class="fr-deco"></div>
+              <div class="fr-top">
+                <span class="fr-code">ESTJ</span>
+                <span class="fr-rk" style="background:#ffd28a;color:#8a5a00">普通</span>
+              </div>
+              <div class="fr-emoji">🐶</div>
+              <div class="fr-name">总经理</div>
+              <div class="fr-sub">务实 · 可靠 · 掌控力满分</div>
+              <div class="fr-tags"><span>外向 E</span><span>实感 S</span><span>思考 T</span><span>判断 J</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="draw-tip" id="drawTip">👆 轻触卡面翻牌</div>
+      <div class="detail" id="drawDetail">
+        <div class="result-hero">
+          <div class="lab">你抽到了</div>
+          <div class="title" style="color:#ff9db4">ESTJ · 总经理</div>
+          <div class="sub">你热情、好奇，又很会照顾别人</div>
+        </div>
+        <div class="rcard"><h4>你的维度构成</h4>
+          ${bar('外向 E','内向 I',62,'#ff9db4')}${bar('直觉 N','实感 S',71,'#a8c8ff')}${bar('情感 F','思考 T',58,'#ffd28a')}${bar('判断 J','知觉 P',80,'#9ad7c4')}
+        </div>
+        <div class="unlock"><h4>想看更走心的「深度解读」？</h4><p>职业建议 · 感情匹配 · 成长小贴士</p>
+          <div class="ubtns"><div class="b ad" onclick="hint('看广告 · 免费解锁')">看广告解锁</div><div class="b pay" onclick="hint('¥5.9 · 解锁全站测评')">¥5.9 解锁</div></div>
+        </div>
+        <div class="result-actions">
+          <div class="b prim" onclick="collectCard()">收入卡册</div>
+          <div class="b ghost" onclick="closeFlow()">回到首页</div>
+        </div>
+        <div style="height:10px"></div>
+      </div>`;
+    openFlow('drawFlow');$('drawBody').scrollTop=0;
+  }
+  function flip(){
+    const c=$('fcard');
+    if(c.classList.contains('flipped'))return;
+    c.classList.add('flipped');
+    $('drawTip').textContent='🎉 恭喜获得「ESTJ · 总经理」';
+    setTimeout(()=>{$('drawDetail').classList.add('show');$('drawBody').scrollTop=$('drawBody').scrollHeight;},650);
+  }
+  function collectCard(){hint('已收入卡册 ✦');}
+
+  function bar(l,r,p,c){return `<div class="rbar"><div class="rl"><span>${l}</span><span>${p}%</span></div><div class="rtrack"><div class="rfill" style="width:${p}%;background:${c}"></div></div></div>`}
+
+  // 答题
+  let curQuiz=null,qIdx=0,qTotal=5,answers=[];
+  const dq=['在聚会里，你通常？','做决定时你更看重？','面对计划外的事，你？','你更被哪种描述吸引？','一周结束你更想？'];
+  const dops=[['和很多人交谈，能量满满','安静待着，慢慢充电'],['逻辑与事实','感受与和谐'],['顺其自然，随机应变','提前安排，心里有底'],['具体的当下','可能的未来'],['出门走走见朋友','宅家回血独处']];
+  function startQuiz(code){
+    curQuiz=quizzes.find(q=>q.code===code);qIdx=0;answers=[];qTotal=5;
+    $('quizTitle').textContent=curQuiz.name;openFlow('quizFlow');renderQuiz();
+  }
+  function renderQuiz(){
+    const sel=answers[qIdx];
+    const opts=dops[qIdx].map((o,i)=>`<div class="opt ${sel===i?'sel':''}" onclick="pick(${i})">${o}</div>`).join('');
+    $('quizBody').innerHTML=`
+      <div class="progress-wrap"><div class="progress-top"><span>第 ${qIdx+1} / ${qTotal} 题</span><span>${Math.round(qIdx/qTotal*100)}%</span></div><div class="pbar"><div class="pfill" style="width:${qIdx/qTotal*100}%"></div></div></div>
+      <div class="qcard-big"><div class="qno">${curQuiz.emoji} ${curQuiz.name}</div><div class="qtext">${dq[qIdx]}</div>${opts}</div>
+      <div class="next-btn ${sel==null?'off':''}" onclick="nextQ()">${qIdx===qTotal-1?'揭晓角色卡':'下一题'}</div>`;
+    $('quizBody').scrollTop=0;
+  }
+  function pick(i){answers[qIdx]=i;renderQuiz();}
+  function nextQ(){if(answers[qIdx]==null){hint('先选一个答案哦');return;}if(qIdx<qTotal-1){qIdx++;renderQuiz()}else{drawCard('quiz')}}
+
+  function openFlow(id){$(id).classList.add('show');}
+  function closeFlow(){document.querySelectorAll('.flow').forEach(f=>f.classList.remove('show'));}
+
+  renderHome();renderHistory();renderMine();
+</script>
+</body></html>

@@ -1,0 +1,39 @@
+[SqlRun] tools/sql/inspect-local.sql -> jdbc:mysql://127.0.0.1:3306/guiz?serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false，共 3 条语句
+id	code	name	scoring_model	status	question_count
+1	mbti	MBTI 性格类型测试	PAIR	1	0
+2	disc	DISC 行为风格测试	MAX	1	0
+3	enneagram	九型人格测试	MAX	1	0
+4	holland	霍兰德职业兴趣测试	TOP3	1	0
+5	attachment	恋爱依恋类型测试	MAX	1	0
+(5 行)
+tbl	quiz_id	cnt
+question	1	93
+question	2	20
+question	3	36
+question	4	30
+question	5	24
+quiz_result	1	16
+quiz_result	2	4
+quiz_result	3	9
+quiz_result	4	6
+quiz_result	5	4
+dimension	1	8
+dimension	2	4
+dimension	3	9
+dimension	4	6
+dimension	5	4
+(15 行)
+COLUMN_NAME	COLUMN_TYPE
+id	bigint(20)
+quiz_id	bigint(20)
+type_code	varchar(16)
+name	varchar(32)
+summary	varchar(255)
+detail	text
+image_url	varchar(255)
+traits	json
+sort_order	int(11)
+basic_report	json
+advanced_report	json
+(11 行)
+[SqlRun] 完成：成功 3 条，失败 0 条
