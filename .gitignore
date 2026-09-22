@@ -57,7 +57,3 @@ run.log
 payload-*.json
 Payload-*.json
 .probe.txt
-
-### uni-app 前端副本 ###
-docs/uni-app-frontend/node_modules/
-docs/uni-app-frontend/unpackage/
