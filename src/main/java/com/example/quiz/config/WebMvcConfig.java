@@ -22,7 +22,8 @@ public class WebMvcConfig implements WebMvcConfigurer {   // 实现接口才能�
                 .addPathPatterns("/api/**")               // 拦截范围：/api 下所有接口（** 表示任意层级）
                 .excludePathPatterns(                     // 例外：这些路径不拦截
                         "/api/auth/login",                // 登录接口必须放行，不然用户没法登录
-                        "/api/quiz/**"                    // 出题与提交：游客也要能完整测完，所以放行
+                        "/api/quiz/**",                   // 出题与提交：游客也要能完整测完，所以放行
+                        "/api/weather"                    // 天气卡：公开数据，游客态也要显示
                                                           // 用 ** 是因为出题路径带变量 /api/quiz/{code}
                                                           // 等以后做"登录用户才能解锁完整报告"，再把提交接口收回来
                 );

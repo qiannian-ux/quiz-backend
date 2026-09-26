@@ -38,6 +38,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
+        <!-- 天气接口要解析和风天气的 JSON：webmvc starter 不含 jackson，这里显式引入
+             版本由 spring-boot-starter-parent 的 BOM 管理，别手写版本号 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.mysql</groupId>

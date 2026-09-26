@@ -34,6 +34,7 @@ const SEGMENTS = [
   { file: 'seed-enneagram.sql',     title: '八、九型人格测评（全套数据）', note: 'quiz_id=3：测评定义 + 9 个类型维度 + 36 道李克特五点量表题（每型 4 题）+ 9 型结果（含双档解析）。scoring_model=MAX。由 tools/gen_reports.py 生成。' },
   { file: 'seed-holland.sql',       title: '九、霍兰德职业兴趣测评（全套数据）', note: 'quiz_id=4：测评定义 + 6 个类型维度 + 30 道李克特题（每型 5 题）+ 6 型结果（含双档解析）。scoring_model=TOP3，取前三拼码（如 RIA/SEC）。由 tools/gen_reports.py 生成。' },
   { file: 'seed-attachment.sql',    title: '十、恋爱依恋类型测评（全套数据）', note: 'quiz_id=5：测评定义 + 4 个类型维度 + 24 道李克特题（每型 6 题）+ 4 型结果（含双档解析）。scoring_model=MAX。由 tools/gen_reports.py 生成。' },
+  { file: 'migrate-login-days.sql', title: '十二、累计 / 连续登录天数（权威在后端）', note: '建 user_login_day 明细表（UNIQUE(user_id,login_date) 保证同一天只记一次）；user 表幂等加 total_login_days / consecutive_login_days / last_login_date 三个冗余列；并按 user_quiz_record 的日期为老用户补历史登录明细，避免积累归零。' },
   { file: 'fix-question-count.sql', title: '十一、回填 quiz 表展示字段（question_count / emoji / tag）', note: '①seed 插 quiz 行时题库还没插，question_count 写的是 0，不回填首页会显示「0 题」，这里按 question 表真实题数 UPDATE；②MBTI 行由 CSV 生成没带 emoji/tag，按 code 补上。幂等。' },
 ];
 

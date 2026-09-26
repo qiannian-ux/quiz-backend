@@ -57,3 +57,24 @@ run.log
 payload-*.json
 Payload-*.json
 .probe.txt
+
+### 一次性探测 / 修复脚本（保留在本地，不入库）###
+tools/_*
+tools/fix_*
+tools/probe_*
+tools/cdp_probe.py
+tools/chrome_log_probe.py
+tools/diag_*
+tools/dump_*
+tools/patch_*
+tools/grep_frontend.py
+tools/cleanup_and_mem.py
+tools/read_mem.py
+tools/write_mem.py
+tools/test_*
+
+### Agent 工作目录（项目数据，不是源码）###
+.workbuddy/
+
+### 前端副本残留（已在上一版删除，只剩一个文件）###
+docs/uni-app-frontend/
