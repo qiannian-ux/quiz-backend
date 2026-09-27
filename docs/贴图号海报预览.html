@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>贴图号海报预览 · 探我趣测</title>
+<style>
+  body { background:#F3EDE6; color:#2A2420; margin:28px;
+         font:14px/1.7 "PingFang SC","Microsoft YaHei",sans-serif; }
+  h1 { font-size:20px; margin:0 0 6px; }
+  .sub { color:#7A6E63; margin:0 0 18px; }
+  .bar { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  figure { margin:0; }
+  canvas { width:330px; height:440px; display:block;
+           border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.14); }
+  figcaption { margin-top:8px; font-size:13px; color:#7A6E63; }
+  button { font:inherit; padding:6px 16px; margin-right:8px; border-radius:8px;
+           border:1px solid rgba(120,90,70,.25); background:#fff; cursor:pointer; }
+  button.on { background:#FF7E6B; color:#fff; border-color:#FF7E6B; }
+  .note { margin-top:22px; padding:14px 18px; border-radius:10px;
+          background:#FFE7E0; color:#8A4B3E; font-size:13px; max-width:760px; }
+  .note b { color:#2A2420; }
+</style>
+</head>
+<body>
+<h1>贴图号海报预览</h1>
+<p class="sub">跑的是小程序里同一份 <code>utils/poster.js</code>，排版改完刷新这里就能看到。</p>
+<div id="tabs"></div>
+<div class="bar" id="bar"></div>
+<div class="note">
+  <b>这个文件怎么用</b><br>
+  ① 改 <code>pages/result/result.vue</code> 之前先在这里把排版调爽；<br>
+  ② 改完 <code>poster.js</code> 跑一次 <code>tools/_build_poster_preview.py</code> 重新生成；<br>
+  ③ 真机上字体与这里不完全一致（小程序用系统字体，字宽略有差别），
+     所以这里"能看"不等于"刚好"，真机上再微调一次。<br>
+  <b>图 3 的小程序码位现在是降级状态</b>（显示"微信搜探我趣测"）。
+  后端接出 <code>GET /api/poster/qrcode</code> 之后，同一个函数传第三个参数就会自动画码。
+</div>
+
+<script>
+
+const DIMENSIONS = {
+  EI: { left:'E', right:'I', leftName:'外向', rightName:'内向', color:'#FF9DB4' },
+  SN: { left:'S', right:'N', leftName:'实感', rightName:'直觉', color:'#F2B36B' },
+  TF: { left:'T', right:'F', leftName:'思考', rightName:'情感', color:'#7BC4A4' },
+  JP: { left:'J', right:'P', leftName:'判断', rightName:'感觉', color:'#E08FB0' }
+};
+const DIMENSION_KEYS = ['EI', 'SN', 'TF', 'JP'];
+
+const __SRC__ = "/**\n * 结果海报绘制 · 1080 × 1440（3:4）\n * ------------------------------------------------------------\n * 这个文件的职责只有一件事：往给定的 2D 上下文里画。\n * 取 canvas 节点、导出临时文件、存相册 —— 那部分在\n * components/result-poster/result-poster.vue，不混在这里。\n *\n * 为什么独立成文件：\n *   排版是这个功能里唯一\"改起来最疼\"的部分，跟组件生命周期搅在一起会没法调。\n *   纯函数写法可以单独拿 DevTools 试排。\n *\n * 尺寸说明：\n *   1080×1440 是微信「贴图号 / 小绿书」的原生比例（3:4），小红书也是这个。\n *   统一用它，就不用为不同渠道出两套图。\n *\n * 依赖：只有 @/utils/scoring.js 的维度定义（用来画占比条），\n *      其它全部是纯绘制，不碰任何平台 API —— 微信 / 抖音端通用。\n */\n\n\nconst W = 1080\nconst H = 1440\n\n/* ---------- 色板：与 App.vue 的设计令牌同源（海报里不能用 CSS 变量，得写字面量） ---------- */\nconst CREAM = '#FBF1E9'\nconst CREAM_2 = '#F3E3D5'\nconst INK = '#2A2420'\nconst TEXT2 = '#4A423C'\nconst SUB = '#7A6E63'\nconst FAINT = '#A89A8C'\nconst BRAND = '#FF7E6B'\nconst FONT = 'PingFang SC, Helvetica Neue, Helvetica, Arial, sans-serif'\n\nconst BRAND_NAME = '探我趣测'\n\n/**\n * #RRGGBB / #RGB / 其它 → rgba() 字符串。\n * 海报名色来自云端下发（report.color），格式不能假定，\n * 所以这里做容错，解析失败就退回品牌色。\n */\nfunction rgba(color, a) {\n  const s = String(color || '').trim()\n  const m = /^#?([0-9a-f]{6})$/i.exec(s)\n  if (m) {\n    const n = parseInt(m[1], 16)\n    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`\n  }\n  const s3 = /^#?([0-9a-f]{3})$/i.exec(s)\n  if (s3) {\n    const t = s3[1]\n    return `rgba(${parseInt(t[0] + t[0], 16)},${parseInt(t[1] + t[1], 16)},${parseInt(t[2] + t[2], 16)},${a})`\n  }\n  return `rgba(255,126,107,${a})`\n}\n\n/** 圆角矩形路径（不用 ctx.roundRect：老版本小程序基础库没有） */\nfunction roundRect(ctx, x, y, w, h, r) {\n  const rr = Math.max(0, Math.min(r, w / 2, h / 2))\n  ctx.beginPath()\n  ctx.moveTo(x + rr, y)\n  ctx.lineTo(x + w - rr, y)\n  ctx.arcTo(x + w, y, x + w, y + rr, rr)\n  ctx.lineTo(x + w, y + h - rr)\n  ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr)\n  ctx.lineTo(x + rr, y + h)\n  ctx.arcTo(x, y + h, x, y + h - rr, rr)\n  ctx.lineTo(x, y + rr)\n  ctx.arcTo(x, y, x + rr, y, rr)\n  ctx.closePath()\n}\n\n/** 一团柔光，给背景加\"品牌色呼吸\"，避免整张图是平的奶油色 */\nfunction blob(ctx, x, y, r, color, a) {\n  const g = ctx.createRadialGradient(x, y, 0, x, y, r)\n  g.addColorStop(0, rgba(color, a))\n  g.addColorStop(1, rgba(color, 0))\n  ctx.fillStyle = g\n  ctx.beginPath()\n  ctx.arc(x, y, r, 0, Math.PI * 2)\n  ctx.fill()\n}\n\n/**\n * 中文换行。canvas 没有 text-wrap，只能逐字量宽度。\n * @param maxLines 超了截断 + 省略号，防止把版面撑破\n */\nfunction wrap(ctx, text, maxWidth, maxLines) {\n  const cs = String(text || '').replace(/\\n/g, ' ').split('')\n  const lines = []\n  let cur = ''\n  for (const ch of cs) {\n    if (cur && ctx.measureText(cur + ch).width > maxWidth) {\n      lines.push(cur)\n      cur = ''\n      if (lines.length >= maxLines) break\n    }\n    cur += ch\n  }\n  if (lines.length < maxLines && cur) lines.push(cur)\n  if (lines.length === maxLines && cur && lines[maxLines - 1] !== cur) {\n    let last = lines[maxLines - 1]\n    while (last && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1)\n    lines[maxLines - 1] = last + '…'\n  }\n  return lines\n}\n\n/** 每个角都要有：用户每发一张，就是一次免费的品牌曝光 */\nfunction watermark(ctx) {\n  ctx.font = '500 26px ' + FONT\n  ctx.fillStyle = 'rgba(120,90,70,0.42)'\n  ctx.textAlign = 'right'\n  ctx.textBaseline = 'alphabetic'\n  ctx.fillText(BRAND_NAME, W - 64, H - 52)\n  ctx.textAlign = 'left'\n}\n\nfunction base(ctx, accent) {\n  const g = ctx.createLinearGradient(0, 0, 240, H)\n  g.addColorStop(0, CREAM)\n  g.addColorStop(1, CREAM_2)\n  ctx.fillStyle = g\n  ctx.fillRect(0, 0, W, H)\n  blob(ctx, W - 100, -80, 640, accent, 0.42)\n  blob(ctx, 20, H - 60, 520, accent, 0.22)\n  ctx.strokeStyle = 'rgba(120,90,70,0.10)'\n  ctx.lineWidth = 4\n  roundRect(ctx, 32, 32, W - 64, H - 64, 48)\n  ctx.stroke()\n}\n\n/** 居中胶囊标签，返回它下面的 y */\nfunction pill(ctx, cx, y, text, color) {\n  ctx.font = '500 28px ' + FONT\n  const w = ctx.measureText(text).width + 56\n  const h = 64\n  roundRect(ctx, cx - w / 2, y, w, h, 32)\n  ctx.fillStyle = rgba(color, 0.16)\n  ctx.fill()\n  ctx.fillStyle = color\n  ctx.textAlign = 'center'\n  ctx.textBaseline = 'middle'\n  ctx.fillText(text, cx, y + h / 2 + 2)\n  ctx.textAlign = 'left'\n  ctx.textBaseline = 'alphabetic'\n  return y + h\n}\n\n/** 小标题（左侧一条品牌色竖条 + 文字），返回它下面的 y */\nfunction sectionTitle(ctx, text, accent, y) {\n  roundRect(ctx, 88, y + 8, 8, 40, 4)\n  ctx.fillStyle = accent\n  ctx.fill()\n  ctx.font = '600 38px ' + FONT\n  ctx.fillStyle = INK\n  ctx.fillText(text, 120, y + 44)\n  return y + 84\n}\n\n/** 一行细分割线 */\nfunction divider(ctx, y) {\n  ctx.strokeStyle = 'rgba(120,90,70,0.12)'\n  ctx.lineWidth = 2\n  ctx.beginPath()\n  ctx.moveTo(88, y)\n  ctx.lineTo(W - 88, y)\n  ctx.stroke()\n}\n\n/** 只画占比条需要的数据（PAIR 模型才有，DISC/九型/依恋/霍兰德没有） */\nfunction dimensionBars(r) {\n  if (!r || !r.hasBars) return []\n  return DIMENSION_KEYS.map((k) => {\n    const d = DIMENSIONS[k]\n    const win = (r.winner || {})[k]\n    const isLeft = win === d.left\n    const p = (r.percent || {})[k] || 50\n    return {\n      label: isLeft ? d.leftName + ' ' + d.left : d.rightName + ' ' + d.right,\n      color: d.color,\n      percent: isLeft ? p : 100 - p\n    }\n  })\n}\n\nfunction drawBars(ctx, bars, y) {\n  ctx.font = '500 32px ' + FONT\n  bars.forEach((b) => {\n    ctx.fillStyle = SUB\n    ctx.fillText(b.label, 96, y + 28)\n    const tx = 96\n    const tw = W - 96 - 200\n    roundRect(ctx, tx, y + 46, tw, 22, 11)\n    ctx.fillStyle = 'rgba(120,90,70,0.12)'\n    ctx.fill()\n    roundRect(ctx, tx, y + 46, Math.max(tw * b.percent / 100, 22), 22, 11)\n    ctx.fillStyle = b.color\n    ctx.fill()\n    ctx.font = '500 28px ' + FONT\n    ctx.fillStyle = FAINT\n    ctx.textAlign = 'right'\n    ctx.fillText(b.percent + '%', W - 96, y + 66)\n    ctx.textAlign = 'left'\n    ctx.font = '500 32px ' + FONT\n    y += 92\n  })\n}\n\n/* ============================================================\n * 图 1 · 封面：大字最抢眼，负责让人停下来\n * ========================================================== */\nfunction drawCover(ctx, r) {\n  const accent = r.color || BRAND\n  base(ctx, accent)\n\n  pill(ctx, W / 2, 118, '30 秒测出你的隐藏属性', accent)\n\n  ctx.textAlign = 'center'\n  ctx.textBaseline = 'middle'\n  ctx.font = '150px ' + FONT\n  ctx.fillText(r.emoji || '🧩', W / 2, 262)\n\n  // 结果码：canvas 不支持 letter-spacing，只能逐字摆（这也顺便把 4 个字母拉开了）\n  const code = String(r.code || '').slice(0, 8)\n  ctx.font = '700 200px ' + FONT\n  const gap = 26\n  const codeW = code.split('').reduce((s, c) => s + ctx.measureText(c).width, 0)\n  const total = codeW + gap * Math.max(code.length - 1, 0)\n  let cx = (W - total) / 2\n  const codeY = 470\n  ctx.fillStyle = accent\n  for (const c of code) {\n    ctx.fillText(c, cx, codeY)\n    cx += ctx.measureText(c).width + gap\n  }\n\n  ctx.font = '600 60px ' + FONT\n  ctx.fillStyle = INK\n  ctx.fillText(r.name || '', W / 2, codeY + 104)\n\n  ctx.font = '30px ' + FONT\n  ctx.fillStyle = SUB\n  ctx.fillText(r.subtitle || '', W / 2, codeY + 166)\n  ctx.textAlign = 'left'\n  ctx.textBaseline = 'alphabetic'\n\n  // 一句话钩子：白卡片，多少字都不破版\n  ctx.font = '34px ' + FONT\n  const lines = wrap(ctx, (r.basic && r.basic.one_liner) || r.summary || '', W - 90 - 96, 4)\n  const lh = 62\n  const cardH = lines.length * lh + 72\n  const cardY = 700\n  roundRect(ctx, 90, cardY, W - 180, cardH, 36)\n  ctx.fillStyle = 'rgba(255,255,255,0.78)'\n  ctx.fill()\n  lines.forEach((l, i) => ctx.fillText(l, 138, cardY + 62 + i * lh))\n\n  ctx.font = '28px ' + FONT\n  ctx.fillStyle = FAINT\n  ctx.textAlign = 'center'\n  ctx.fillText('翻到第 2 张看你的三个关键词', W / 2, H - 140)\n  ctx.textAlign = 'left'\n  watermark(ctx)\n}\n\n/* ============================================================\n * 图 2 · 三个关键词：负责让人\"看完\"并愿意点进小程序\n * ========================================================== */\nfunction drawTraits(ctx, r) {\n  const accent = r.color || BRAND\n  base(ctx, accent)\n\n  ctx.textAlign = 'center'\n  ctx.font = '600 52px ' + FONT\n  ctx.fillStyle = INK\n  ctx.fillText(r.name || r.code || '', W / 2, 212)\n  ctx.font = '30px ' + FONT\n  ctx.fillStyle = FAINT\n  ctx.fillText((r.code || '') + (r.subtitle ? ' · ' + r.subtitle : ''), W / 2, 266)\n  ctx.textAlign = 'left'\n\n  let y = 336\n  const traits = (r.basic && r.basic.traits || []).slice(0, 3)\n  if (traits.length) {\n    y = sectionTitle(ctx, '你的三个关键词', accent, y)\n    traits.forEach((t, i) => {\n      roundRect(ctx, 96, y + 4, 44, 44, 22)\n      ctx.fillStyle = accent\n      ctx.fill()\n      ctx.font = '600 26px ' + FONT\n      ctx.fillStyle = '#ffffff'\n      ctx.textAlign = 'center'\n      ctx.textBaseline = 'middle'\n      ctx.fillText(String(i + 1), 118, y + 27)\n      ctx.textAlign = 'left'\n      ctx.textBaseline = 'alphabetic'\n\n      ctx.font = '600 42px ' + FONT\n      ctx.fillStyle = INK\n      const ls = wrap(ctx, t, W - 250, 2)\n      ls.forEach((l, k) => ctx.fillText(l, 176, y + 42 + k * 58))\n      y += Math.max(ls.length, 1) * 58 + 62\n    })\n  }\n\n  const strengths = (r.basic && r.basic.strengths || []).slice(0, 2)\n  if (strengths.length) {\n    y += 8\n    divider(ctx, y)\n    y += 60\n    y = sectionTitle(ctx, '你最被认可的是', accent, y)\n    strengths.forEach((s) => {\n      ctx.font = '38px ' + FONT\n      ctx.fillStyle = TEXT2\n      const ls = wrap(ctx, s, W - 260, 3)\n      ls.forEach((l, k) => ctx.fillText(l, 176, y + 40 + k * 56))\n      y += Math.max(ls.length, 1) * 56 + 44\n    })\n  }\n\n  // 占比条塞在底部固定区；内容太长就整块放弃，绝不叠字\n  const bars = dimensionBars(r)\n  if (bars.length && y < 920) drawBars(ctx, bars, Math.max(y + 24, 900))\n\n  watermark(ctx)\n}\n\n/* ============================================================\n * 图 3 · 给你的话 + 引导：收尾，负责把人送回小程序\n * ========================================================== */\nfunction drawGuide(ctx, r, qrPath) {\n  const accent = r.color || BRAND\n  base(ctx, accent)\n\n  const tip = (r.basic && r.basic.tip) || r.summary || ''\n  ctx.font = '44px ' + FONT\n  const lines = wrap(ctx, tip, W - 190 - 96, 6)\n  const cardH = lines.length * 76 + 90\n  const cardY = 140\n  roundRect(ctx, 90, cardY, W - 180, cardH, 40)\n  ctx.fillStyle = 'rgba(255,255,255,0.80)'\n  ctx.fill()\n\n  // 引号只做装饰，压在卡片右上角，淡到不抢字\n  ctx.font = '700 120px Georgia, ' + FONT\n  ctx.fillStyle = rgba(accent, 0.16)\n  ctx.textAlign = 'right'\n  ctx.fillText('“', W - 130, cardY + 118)\n  ctx.textAlign = 'left'\n\n  ctx.font = '44px ' + FONT\n  ctx.fillStyle = INK\n  lines.forEach((l, i) => ctx.fillText(l, 138, cardY + 76 + 44 + i * 76))\n\n  // 引导区：有小程序的码就画码，没有就退成一句\"搜名字\"。\n  // 抖音端没有小程序码，走的就是后面这条降级路径 —— 不留空白边，也不留违规的普通二维码。\n  const box = 300\n  const bx = (W - box) / 2\n  const by = 1020\n  roundRect(ctx, bx, by, box, box, 32)\n  ctx.fillStyle = 'rgba(255,255,255,0.94)'\n  ctx.fill()\n  ctx.strokeStyle = rgba(accent, 0.35)\n  ctx.lineWidth = 4\n  ctx.stroke()\n\n  if (qrPath) {\n    try {\n      ctx.drawImage(qrPath, bx + 16, by + 16, box - 32, box - 32)\n    } catch (e) {\n      drawFallbackMark(ctx, bx, by, box, accent)\n    }\n  } else {\n    drawFallbackMark(ctx, bx, by, box, accent)\n    ctx.font = '30px ' + FONT\n    ctx.fillStyle = SUB\n    ctx.textAlign = 'center'\n    ctx.fillText('微信搜「' + BRAND_NAME + '」', W / 2, by + box + 54)\n    ctx.textAlign = 'left'\n  }\n\n  ctx.font = '500 30px ' + FONT\n  ctx.fillStyle = FAINT\n  ctx.textAlign = 'center'\n  ctx.fillText('长按识别 · 30 秒测出你的隐藏属性', W / 2, 1420)\n  ctx.textAlign = 'left'\n  watermark(ctx)\n}\n\nfunction drawFallbackMark(ctx, bx, by, box, accent) {\n  ctx.font = '110px ' + FONT\n  ctx.textAlign = 'center'\n  ctx.textBaseline = 'middle'\n  ctx.fillText('🧩', bx + box / 2, by + box / 2)\n  ctx.textBaseline = 'alphabetic'\n  ctx.textAlign = 'left'\n}\n\n/** 三张图的绘制顺序：封面 → 关键词 → 引导 */\nconst RENDERERS = {\n  cover: drawCover,\n  traits: drawTraits,\n  guide: drawGuide\n}\n";
+const api = new Function(__SRC__ + '\nreturn { drawCover:drawCover, drawTraits:drawTraits, drawGuide:drawGuide, W:W, H:H };')();
+
+const SAMPLES = [
+  {
+    label: 'INTJ（有维度占比条）',
+    report: {
+      source:'local', code:'INTJ', name:'建筑师', emoji:'建', color:'#E08FB0',
+      subtitle:'分析家 · INTJ',
+      summary:'富有想象力和战略性的思想家，一切皆在计划之中。',
+      basic:{ one_liner:'富有想象力和战略性的思想家，一切皆在计划之中。',
+              traits:['战略思维','独立思考','意志坚定','追求卓越'],
+              strengths:['战略思维','独立思考','意志坚定'],
+              weaknesses:['过于完美','不善社交'],
+              tip:'你的关键词：战略思维 · 独立思考 · 意志坚定' },
+      advanced:{ chapters:[], career:[], famous:'' },
+      winner:{ EI:'I', SN:'N', TF:'T', JP:'J' },
+      percent:{ EI:78, SN:82, TF:90, JP:88 }, hasBars:true
+    }
+  },
+  {
+    label: 'RIA 霍兰德（无占比条）',
+    report: {
+      source:'cloud', code:'RIA', name:'现实型×研究型×艺术型', emoji:'\u{1F9E9}', color:'#7BC4A4',
+      subtitle:'霍兰德 · RIA',
+      summary:'喜欢动手、爱琢磨原理，也少不了点创造。',
+      basic:{ one_liner:'喜欢动手、爱琢磨原理，也少不了点创造。',
+              traits:['动手能力强','好奇心重','不爱按套路'],
+              strengths:['动手能力强','好奇心重'],
+              weaknesses:['容易三分钟热度'],
+              tip:'别急着定结果，先玩一遍，看哪一块最让你上头。' },
+      advanced:{ chapters:[], career:[], famous:'' },
+      winner:{ TYPE:'RIA' }, percent:{}, hasBars:false
+    }
+  }
+];
+
+let cur = 0;
+const bar = document.getElementById('bar');
+const tabs = document.getElementById('tabs');
+
+SAMPLES.forEach((s, i) => {
+  const b = document.createElement('button');
+  b.textContent = s.label;
+  b.dataset.i = i;
+  b.className = i === 0 ? 'on' : '';
+  b.onclick = () => { cur = i; syncTabs(); render(); };
+  tabs.appendChild(b);
+});
+function syncTabs() {
+  [...tabs.children].forEach((b, i) => b.className = (i === cur ? 'on' : ''));
+}
+
+const KINDS = [
+  ['图 1 · 封面', 'cover'],
+  ['图 2 · 三个关键词', 'traits'],
+  ['图 3 · 给你的话', 'guide']
+];
+
+function render() {
+  bar.innerHTML = '';
+  const r = SAMPLES[cur].report;
+  KINDS.forEach(([title, kind]) => {
+    const fig = document.createElement('figure');
+    const c = document.createElement('canvas');
+    const dpr = 2;
+    c.width = api.W * dpr;
+    c.height = api.H * dpr;
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, c.width, c.height);
+    api['draw' + kind.charAt(0).toUpperCase() + kind.slice(1)](ctx, r, '');
+    const cap = document.createElement('figcaption');
+    cap.textContent = title + '  ·  1080\u00D71440';
+    fig.appendChild(c);
+    fig.appendChild(cap);
+    bar.appendChild(fig);
+  });
+}
+syncTabs();
+render();
+</script>
+</body>
+</html>
